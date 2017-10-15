@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import urllib.request
+import re
 
 def parse():
     url = """
@@ -8,10 +9,31 @@ def parse():
     response = urllib.request.urlopen(url)
     data = response.read()
 
-    soup = BeautifulSoup(data)
+    soup = BeautifulSoup(data, "html5lib")
 
-    print(str(soup))
+    header = []
+    header_read = False
+    rows = []
+    for tr in soup.table.find_all("tr"):
+        columns =  [x for x in tr.contents if x != "\n"]
+        if (columns[1].name == "th") & (~header_read):
+            for col in columns:
+                try:
+                    for child in col.descendants:
+                        if child.name == "a":
+                            header.append(child.string)
+                except:
+                    pass
+            header_read = True
+        elif columns[1].name == "td":
+            row = [re.sub("\u3000", " ", str(col.string).strip()) for col in columns]
+            rows.append(row)
 
+    print(header)
+    print(rows[0])
+    print(rows[1])
+    print(rows[2])
+    print(rows[3])
 
 if __name__ == '__main__':
     parse()
