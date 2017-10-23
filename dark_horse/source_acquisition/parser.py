@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import urllib.request
+from urllib.parse import urlparse, parse_qs
 import re
 
 def parse():
@@ -8,6 +9,9 @@ def parse():
     """
     response = urllib.request.urlopen(url)
     data = response.read()
+
+    base_url = urlparse(url)._replace(query=None).geturl()
+    print(base_url)
 
     soup = BeautifulSoup(data, "html5lib")
 
@@ -22,11 +26,21 @@ def parse():
                     for child in col.descendants:
                         if child.name == "a":
                             header.append(child.string)
+                            header.append("{}_url".format(child.string))
                 except:
                     pass
             header_read = True
         elif columns[1].name == "td":
-            row = [re.sub("\u3000", " ", str(col.string).strip()) for col in columns]
+            # row = [re.sub("\u3000", " ", str(col.string).strip()) for col in columns]
+            row = []
+            for col in columns:
+                row.append(re.sub("\u3000", " ", str(col.string).strip()))
+                try:
+                    for child in col.descendants:
+                        if child.name == "a":
+                            row.append(child.get("href"))
+                except:
+                    pass
             rows.append(row)
 
     print(header)
