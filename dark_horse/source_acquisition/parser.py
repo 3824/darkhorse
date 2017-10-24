@@ -1,11 +1,32 @@
+# -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 import urllib.request
 from urllib.parse import urlparse, parse_qs, urljoin
 import re
 import json
 
-def parse():
-    url = "http://www.jbis.or.jp/race/result/?sid=result&y_f=2016&m_f=11&y_t=2016&m_t=11&coursec=coursec_01&coursec=coursec_02&coursec=coursec_03&coursec=coursec_04&coursec=coursec_05&coursec=coursec_06&coursec=coursec_07&coursec=coursec_08&coursec=coursec_09&coursec=coursec_10&items=100"
+def parse(from_year, to_year, from_month, to_month, item_in_page =100, page=1):
+    url_template = "http://www.jbis.or.jp/race/result/?sid=result&y_f={from_year}&m_f={from_month}&y_t={to_year}" \
+          "&m_t={to_month}&coursec=coursec_01&coursec=coursec_02&coursec=coursec_03&coursec=coursec_04" \
+          "&coursec=coursec_05&coursec=coursec_06&coursec=coursec_07&coursec=coursec_08" \
+          "&coursec=coursec_09&coursec=coursec_10&items={item_in_page}&page={page}"
+
+    init_url = url_template.format(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month, item_in_page=item_in_page, page=page)
+    result_count = parse_page(init_url)
+
+    # 2ページ目以降（101〜200件 以降）を検索
+    for i in range(int(result_count/item_in_page)):
+        page += (i+1) # pageパラメータは1スタートなので
+        url = url_template.format(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month, item_in_page=item_in_page, page=page)
+        parse_page(url)
+
+
+def parse_page(url):
+    """
+    渡されたURLのページをパースするだけ
+    :param url:
+    :return:
+    """
     response = urllib.request.urlopen(url)
     data = response.read()
 
@@ -13,6 +34,15 @@ def parse():
     base_url = "{}://{}/".format(uri.scheme, uri.netloc)
 
     soup = BeautifulSoup(data, "html5lib")
+
+    ### 検索結果の総数を取得しておく
+    result_count = 0
+    for count_desc in soup.find_all("p", class_="count"):
+        if count_desc:
+            print(count_desc)
+            match = re.search(r"【(\d+)件中", count_desc.string)
+            if match:
+                result_count = int(match.group(1))
 
     header = []
     header_read = False
@@ -43,9 +73,13 @@ def parse():
                     pass
             maps.append(map)
 
-    print(header)
     print(maps[0])
+    return result_count
 
 if __name__ == '__main__':
-    parse()
+    from_year = 2016
+    to_year = 2016
+    from_month = 11
+    to_month = 11
+    parse(from_year, to_year, from_month, to_month)
 
