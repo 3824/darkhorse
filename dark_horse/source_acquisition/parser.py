@@ -4,6 +4,15 @@ import urllib.request
 from urllib.parse import urlparse, parse_qs, urljoin
 import re
 import json
+from logging import getLogger, StreamHandler, DEBUG
+import dark_horse.data.db_util as db_util
+
+logger = getLogger(__name__)
+handler = StreamHandler()
+handler.setLevel(DEBUG)
+logger.setLevel(DEBUG)
+logger.addHandler(handler)
+logger.propagate = False
 
 def parse(from_year, to_year, from_month, to_month, item_in_page =100, page=1):
     url_template = "http://www.jbis.or.jp/race/result/?sid=result&y_f={from_year}&m_f={from_month}&y_t={to_year}" \
@@ -12,12 +21,16 @@ def parse(from_year, to_year, from_month, to_month, item_in_page =100, page=1):
           "&coursec=coursec_09&coursec=coursec_10&items={item_in_page}&page={page}"
 
     init_url = url_template.format(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month, item_in_page=item_in_page, page=page)
+
+    logger.debug("initial URL: {}".format(init_url))
+
     result_count = parse_page(init_url)
 
     # 2ページ目以降（101〜200件 以降）を検索
     for i in range(int(result_count/item_in_page)):
-        page += (i+1) # pageパラメータは1スタートなので
+        page = (i+2) # pageパラメータは1スタートなので
         url = url_template.format(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month, item_in_page=item_in_page, page=page)
+        logger.debug("parse URL: {}".format(url))
         parse_page(url)
 
 
@@ -73,7 +86,9 @@ def parse_page(url):
                     pass
             maps.append(map)
 
+    print(maps[0].keys())
     print(maps[0])
+    db_util.insert_search_result(maps)
     return result_count
 
 if __name__ == '__main__':
