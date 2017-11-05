@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import urllib.request
 from urllib.parse import urlparse, parse_qs, urljoin
 import re
-import json
+import dark_horse.data.db_util as db_util
 
 def parse_jockey_history(url):
     response = urllib.request.urlopen(url+"?items=100")
@@ -52,6 +52,7 @@ def parse_jockey_history(url):
 
     print(header)
     print(maps[0])
+    db_util.insert_jockey_result(maps)
 
 if __name__ == '__main__':
     url = "http://www.jbis.or.jp/race/jockey/J00655/"
