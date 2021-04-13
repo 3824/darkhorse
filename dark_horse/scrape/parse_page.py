@@ -32,11 +32,18 @@ def parse_page(id):
     bs = BeautifulSoup(response, "html.parser")
     print(bs.select("span"))
 
-    race_type = bs.select("span")[6].text
+    race_type_str = bs.select("span")[6].text
+    if race_type_str == "LIVE":
+        race_type_str = bs.select("span")[7].text
+
+    race_type = load_race_type(race_type_str)
     print(race_type)
 
-    race_type = load_race_type(race_type)
-    print(race_type)
+    for tr in bs.find_all("tr"):
+        if "class" in tr.attrs:
+            continue
+        print(tr.decode_contents)
+        ## <td>区切りで着順の情報が入っている。
 
 if __name__ == '__main__':
     parse_page("202143040901")
