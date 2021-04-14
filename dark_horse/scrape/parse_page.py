@@ -26,6 +26,16 @@ def load_race_type(race_type_str):
     else:
         return None
 
+def load_each_result(tr):
+    td_list = tr.find_all_next("td")
+    rank = td_list[0].text
+    frame_number =td_list[1].text
+    horse_number = td_list[2].text
+    horse_name = td_list[3].text.strip()
+    jockey_name = td_list[6].text.strip()
+
+    return rank, frame_number, horse_number, horse_name, jockey_name
+
 def parse_page(id):
     url = f"https://db.netkeiba.com/race/{id}/"
     response = request.urlopen(url)
@@ -42,8 +52,9 @@ def parse_page(id):
     for tr in bs.find_all("tr"):
         if "class" in tr.attrs:
             continue
-        print(tr.decode_contents)
+        print(load_each_result(tr))
+        break
         ## <td>区切りで着順の情報が入っている。
 
 if __name__ == '__main__':
-    parse_page("202143040901")
+    parse_page("202109010611")
