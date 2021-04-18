@@ -5,6 +5,9 @@ import re
 track_pattern = re.compile(r"(.)(.)(\d+)m")
 gender_pattern = re.compile(r"^(.)(\d+)$")
 time_pattern = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+weight_pattern = re.compile(r"^(\d+)\(([+-]\d+)\)$")
+trainer_pattern = re.compile(r"^\[(.+)\]\s?(.+)$")
+
 
 class RaceType():
     def __init__(self, cource_info, weather, condition):
@@ -28,8 +31,10 @@ def load_race_type(race_type_str):
     else:
         return None
 
+
 class HorseResult():
-    def __init__(self, horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff):
+    def __init__(self, horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, weight,
+                 weight_diff, trainer_stable, trainer_name):
         self.horse_name = horse_name
         self.frame_number = frame_number
         self.horse_number = horse_number
@@ -37,14 +42,22 @@ class HorseResult():
         self.horse_age = horse_age
         self.time = time
         self.diff = diff
+        self.weight = weight
+        self.weight_diff = weight_diff
+        self.trainer_stable = trainer_stable
+        self.trainer_name = trainer_name
 
     def __str__(self):
-        return "{} ({}, {}), {}-{}".format(self.horse_name, self.frame_number, self.horse_number, self.horse_gender, self.horse_age)
+        return "{} ({}, {}), {}-{}, {}({}), ([{}] {})".format(self.horse_name, self.frame_number, self.horse_number,
+                                                              self.horse_gender,
+                                                              self.horse_age, self.weight, self.weight_diff,
+                                                              self.trainer_stable, self.trainer_name)
+
 
 def load_each_result(tr):
     td_list = tr.find_all_next("td")
     rank = td_list[0].text
-    frame_number =td_list[1].text
+    frame_number = td_list[1].text
     horse_number = td_list[2].text
     horse_name = td_list[3].text.strip()
     gm = gender_pattern.match(td_list[4].text.strip())
@@ -62,14 +75,34 @@ def load_each_result(tr):
         min = int(tm.groups()[0])
         sec = int(tm.groups()[1])
         milli = int(tm.groups()[2])
-        time = min*60 + sec + 0.1*milli
+        time = min * 60 + sec + 0.1 * milli
     else:
         time = None
     diff = td_list[8].text.strip()
 
-    hr = HorseResult(horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff)
+    ## 馬体重
+    wm = weight_pattern.match(td_list[14].text.strip())
+    if wm:
+        horse_weight = int(wm.groups()[0])
+        horse_weight_diff = wm.groups()[1]
+    else:
+        horse_weight = None
+        horse_weight_diff = None
+
+    ## 調教師
+    tm = trainer_pattern.match(td_list[18].text.strip())
+    if tm:
+        trainer_stable = tm.groups()[0]
+        trainer_name = tm.groups()[1]
+    else:
+        trainer_stable = None
+        trainer_name = None
+
+    hr = HorseResult(horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, horse_weight,
+                     horse_weight_diff, trainer_stable, trainer_name)
 
     return rank, frame_number, horse_number, horse_name, jockey_name, hr
+
 
 def parse_page(id):
     url = f"https://db.netkeiba.com/race/{id}/"
@@ -93,6 +126,7 @@ def parse_page(id):
         print(each_result[-1])
         break
         ## <td>区切りで着順の情報が入っている。
+
 
 if __name__ == '__main__':
     parse_page("202109010611")
