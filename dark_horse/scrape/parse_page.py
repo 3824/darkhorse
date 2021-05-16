@@ -103,9 +103,11 @@ def load_each_result(tr):
 
     return rank, frame_number, horse_number, horse_name, jockey_name, hr
 
-
 def parse_page(id):
     url = f"https://db.netkeiba.com/race/{id}/"
+    return parse_page_url(url)
+
+def parse_page_url(url):
     response = request.urlopen(url)
     bs = BeautifulSoup(response, "html.parser")
     print(bs.select("span"))
@@ -124,7 +126,7 @@ def parse_page(id):
 
         print(each_result)
         print(each_result[-1])
-        break
+        break # とりあえず一着のみ
         ## <td>区切りで着順の情報が入っている。
 
 
