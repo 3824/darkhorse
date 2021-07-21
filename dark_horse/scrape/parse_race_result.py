@@ -33,8 +33,9 @@ def load_race_type(race_type_str):
 
 
 class HorseResult():
-    def __init__(self, horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, weight,
+    def __init__(self, horse_id, horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, weight,
                  weight_diff, trainer_stable, trainer_name):
+        self.horse_id = horse_id
         self.horse_name = horse_name
         self.frame_number = frame_number
         self.horse_number = horse_number
@@ -48,7 +49,7 @@ class HorseResult():
         self.trainer_name = trainer_name
 
     def __str__(self):
-        return "{} ({}, {}), {}-{}, {}({}), ([{}] {})".format(self.horse_name, self.frame_number, self.horse_number,
+        return "{}:{} ({}, {}), {}-{}, {}({}), ([{}] {})".format(self.horse_id, self.horse_name, self.frame_number, self.horse_number,
                                                               self.horse_gender,
                                                               self.horse_age, self.weight, self.weight_diff,
                                                               self.trainer_stable, self.trainer_name)
@@ -60,6 +61,8 @@ def load_each_result(tr):
     frame_number = td_list[1].text
     horse_number = td_list[2].text
     horse_name = td_list[3].text.strip()
+    horse_id =  td_list[3].find("a").get("href").replace("horse", "").replace("/", "")
+    print("horse_id={}".format(horse_id))
     gm = gender_pattern.match(td_list[4].text.strip())
     if gm:
         horse_gender = gm.groups()[0]
@@ -98,16 +101,17 @@ def load_each_result(tr):
         trainer_stable = None
         trainer_name = None
 
-    hr = HorseResult(horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, horse_weight,
+    hr = HorseResult(horse_id, horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, horse_weight,
                      horse_weight_diff, trainer_stable, trainer_name)
 
     return rank, frame_number, horse_number, horse_name, jockey_name, hr
 
-def parse_page(id):
-    url = f"https://db.netkeiba.com/race/{id}/"
+def parse_page(race_id):
+    url = f"https://db.netkeiba.com/race/{race_id}/"
     return parse_page_url(url)
 
 def parse_page_url(url):
+    print("parse page: {}".format(url))
     response = request.urlopen(url)
     bs = BeautifulSoup(response, "html.parser")
     print(bs.select("span"))

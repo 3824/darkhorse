@@ -1,7 +1,7 @@
 import glob
 
 from dark_horse.scrape.parse_each_day_race import load_detail_page
-from dark_horse.scrape.parse_page import parse_page_url
+from dark_horse.scrape.parse_race_result import parse_page_url
 
 
 def get_detail(summary_url):
