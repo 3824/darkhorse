@@ -1,4 +1,17 @@
-DROP TABLE IF EXISTS `horse`;
+CREATE DATABASE IF NOT EXISTS dark_horse;
+USE dark_horse;
+
+create table IF not exists `race_info`
+(
+ `race_id`                VARCHAR(20) NOT NULL,
+ `cource`                 VARCHAR(20) NOT NULL,
+ `direction`              VARCHAR(20) NOT NULL,
+ `distance`               INT(20) NOT NULL,
+ `weather`               VARCHAR(20) NOT NULL,
+ `condition`             VARCHAR(20) NOT NULL,
+ `race_date`            Date,
+    PRIMARY KEY (`race_id`)
+) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 create table IF not exists `horse`
 (
@@ -16,9 +29,8 @@ create table IF not exists `horse`
     PRIMARY KEY (`id`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
-create table If not exists 'race_result'
+create table IF not exists `race_result`
 (
--- 1行 1レースの1馬ごとにして、index張っておくと。
  `race_id`               VARCHAR(20) NOT NULL,
  `rank`                   INT(20) NOT NULL,
  `frame_number`     INT(20) NOT NULL,
@@ -32,14 +44,5 @@ create table If not exists 'race_result'
  `weight_diff`          INT(20) NOT NULL,
  `trainer_stable`       VARCHAR(20) NOT NULL,
  `trainer_name`        VARCHAR(20) NOT NULL,
-)
-
-create table if not exists 'race_info'
-(
- `race_id`                VARCHAR(20) NOT NULL,
- `cource`                 VARCHAR(20) NOT NULL,
- `direction`              VARCHAR(20) NOT NULL,
- `distance`               INT(20) NOT NULL,
- `weather`               VARCHAR(20) NOT NULL
- `condition`             VARCHAR(20) NOT NULL
-)
+    PRIMARY KEY (`race_id`)
+) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;

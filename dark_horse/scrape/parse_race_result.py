@@ -1,33 +1,45 @@
 from bs4 import BeautifulSoup
 from urllib import request
 import re
+import datetime
+from dark_horse.model.race_info import RaceInfo
+from dark_horse.model.setting import session
 
 track_pattern = re.compile(r"(.)(.)(\d+)m")
 gender_pattern = re.compile(r"^(.)(\d+)$")
 time_pattern = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 weight_pattern = re.compile(r"^(\d+)\(([+-]\d+)\)$")
 trainer_pattern = re.compile(r"^\[(.+)\]\s?(.+)$")
+result_date_pattern = re.compile(r"(\d+)年(\d+)月(\d+)日")
+
+# class RaceType():
+#     def __init__(self, cource_info, weather, condition, race_date):
+#         self.cource = cource_info[0]
+#         self.direction = cource_info[1]
+#         self.distance = cource_info[2]
+#         self.weather = weather
+#         self.condition = condition
+#         self.race_date = race_date
+#
+#     def __str__(self):
+#         return "{}, {}, {} ({}, {}) - {}".format(self.cource, self.direction, self.distance, self.weather, self.condition, self.race_date)
 
 
-class RaceType():
-    def __init__(self, cource_info, weather, condition):
-        self.cource = cource_info[0]
-        self.direction = cource_info[1]
-        self.distance = cource_info[2]
-        self.weather = weather
-        self.condition = condition
-
-    def __str__(self):
-        return "{}, {}, {} ({}, {})".format(self.cource, self.direction, self.distance, self.weather, self.condition)
-
-
-def load_race_type(race_type_str):
+def load_race_type(race_type_str, race_date):
     types = race_type_str.split("/")
     m = track_pattern.match(types[0].strip())
     if m:
         print(m.groups())
-        race_type = RaceType(m.groups(), types[1].split(":")[1].strip(), types[2].split(":")[1].strip())
-        return race_type
+        ri = RaceInfo()
+        ri.cource = m.groups()[0]
+        ri.direction = m.groups()[1]
+        ri.distance = m.groups()[2]
+        ri.weather =  types[1].split(":")[1].strip()
+        ri.condition =  types[2].split(":")[1].strip()
+        ri.race_date = race_date
+        session.merge(ri)
+        session.commit()
+        return ri
     else:
         return None
 
@@ -116,11 +128,21 @@ def parse_page_url(url):
     bs = BeautifulSoup(response, "html.parser")
     print(bs.select("span"))
 
+    result_link = bs.find("li", class_="result_link").text
+    print("title:{}".format(result_link))
+    t_m = result_date_pattern.match(result_link)
+    race_date = None
+    if t_m:
+        year = int(t_m[1])
+        month = int(t_m[2])
+        date = int(t_m[3])
+        race_date = datetime.datetime(year, month, date)
+
     race_type_str = bs.select("span")[6].text
     if race_type_str == "LIVE":
         race_type_str = bs.select("span")[7].text
 
-    race_type = load_race_type(race_type_str)
+    race_type = load_race_type(race_type_str, race_date)
     print(race_type)
 
     for tr in bs.find_all("tr"):
