@@ -1,7 +1,8 @@
+from pydoc import describe
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, DateTime
-from dark_horse.model.setting import Base
-from dark_horse.model.setting import ENGINE
+from model.setting import Base
+from model.setting import ENGINE
 
 class Horse(Base):
     __tablename__ = "horse"
@@ -14,6 +15,12 @@ class Horse(Base):
     hometown = Column("hometown", String(20))
     price = Column("price", Integer)
     get_price = Column("get_price", Integer)
+    f_id = Column("f_id", String(20))
+    ff_id = Column("ff_id", String(20))
+    fm_id = Column("fm_id", String(20))
+    m_id = Column("m_id", String(20))
+    mf_id = Column("mf_id", String(20))
+    mm_id = Column("mm_id", String(20))
 
     def __repr__(self):
-        return "{}({})".format(self.name, self.id)
+        return "{}({}), (f_id={})".format(self.name, self.id, self.f_id)

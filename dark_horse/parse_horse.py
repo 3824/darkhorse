@@ -3,8 +3,13 @@ from urllib import request
 import re
 from model.horse import Horse
 from model.setting import session
+from urllib.parse import urljoin
 
 price_pattern = re.compile(r"([\d,億]+)万円")
+ped_pattern = re.compile(r".+\/(.+?)\/")
+ped_order = ["f_id", "ff_id", "fm_id", "m_id", "mf_id", "mm_id"]
+
+base_url = "https://db.netkeiba.com"
 
 def extract_price(price_str):
     m = price_pattern.match(price_str.strip())
@@ -46,9 +51,27 @@ def parse_horse_page(url):
         elif th_text == "獲得賞金":
             h.get_price = extract_price(val)
 
+#TODO 馬ページの血統だけ2世代上まで見てDBに入れるか
+    print("predigree::")
+    blood_table = bs.find("table", class_="blood_table")
+    index = 0
+    for h_link in blood_table.find_all("a"):
+        m = ped_pattern.match(h_link.get("href"))
+        if m:
+            h_id = m.groups()[0]
+            print("{} = {}".format(ped_order[index], h_id))
+            setattr(h, ped_order[index], h_id)
+        index = index + 1
+
     print(h)
     session.merge(h)
     session.commit()
+
+    # for link in bs.find_all("a"):
+    #     if link.text == "血統":
+    #         pedigree_url = link.get("href")
+    # pedigree_url = urljoin(base_url, pedigree_url)
+    # print("pedigree_url={}".format(pedigree_url))
 
 ## サンプルURL
 # https://db.netkeiba.com/horse/2018106461/

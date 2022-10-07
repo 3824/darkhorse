@@ -3,14 +3,15 @@ from urllib import request
 import re
 import datetime
 from model.race_info import RaceInfo
+from model.horse_result import HorseResult
 from model.setting import session
 # from dark_horse.model.race_info import RaceInfo
 # from dark_horse.model.setting import session
 
 track_pattern = re.compile(r"(.)(.)(\d+)m")
 gender_pattern = re.compile(r"^(.)(\d+)$")
-time_pattern = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
-weight_pattern = re.compile(r"^(\d+)\(([+-]\d+)\)$")
+time_pattern = re.compile(r"^(\d+):(\d+)\.(\d+)$")
+weight_pattern = re.compile(r"^(\d+)\(([+-]*\d+)\)$")
 trainer_pattern = re.compile(r"^\[(.+)\]\s?(.+)$")
 result_date_pattern = re.compile(r"(\d+)年(\d+)月(\d+)日")
 
@@ -27,12 +28,13 @@ result_date_pattern = re.compile(r"(\d+)年(\d+)月(\d+)日")
 #         return "{}, {}, {} ({}, {}) - {}".format(self.cource, self.direction, self.distance, self.weather, self.condition, self.race_date)
 
 
-def load_race_type(race_type_str, race_date):
+def load_race_type(race_id, race_type_str, race_date):
     types = race_type_str.split("/")
     m = track_pattern.match(types[0].strip())
     if m:
-        print(m.groups())
+        print("for RaceInfo: {}".format(m.groups()))
         ri = RaceInfo()
+        ri.race_id = race_id
         ri.cource = m.groups()[0]
         ri.direction = m.groups()[1]
         ri.distance = m.groups()[2]
@@ -46,32 +48,34 @@ def load_race_type(race_type_str, race_date):
         return None
 
 
-class HorseResult():
-    def __init__(self, horse_id, horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, weight,
-                 weight_diff, trainer_stable, trainer_name):
-        self.horse_id = horse_id
-        self.horse_name = horse_name
-        self.frame_number = frame_number
-        self.horse_number = horse_number
-        self.horse_gender = horse_gender
-        self.horse_age = horse_age
-        self.time = time
-        self.diff = diff
-        self.weight = weight
-        self.weight_diff = weight_diff
-        self.trainer_stable = trainer_stable
-        self.trainer_name = trainer_name
+# class HorseResult():
+#     def __init__(self, race_id, horse_id, horse_name, order_arrival, frame_number, horse_number, horse_gender, horse_age, time, diff, weight,
+#                  weight_diff, trainer_stable, trainer_name):
+#         self.race_id = race_id
+#         self.horse_id = horse_id
+#         self.horse_name = horse_name
+#         self.order_arrival = order_arrival
+#         self.frame_number = frame_number
+#         self.horse_number = horse_number
+#         self.horse_gender = horse_gender
+#         self.horse_age = horse_age
+#         self.time = time
+#         self.diff = diff
+#         self.weight = weight
+#         self.weight_diff = weight_diff
+#         self.trainer_stable = trainer_stable
+#         self.trainer_name = trainer_name
 
-    def __str__(self):
-        return "{}:{} ({}, {}), {}-{}, {}({}), ([{}] {})".format(self.horse_id, self.horse_name, self.frame_number, self.horse_number,
-                                                              self.horse_gender,
-                                                              self.horse_age, self.weight, self.weight_diff,
-                                                              self.trainer_stable, self.trainer_name)
+#     def __str__(self):
+#         return "{}:{} ({}, {}), {}-{}, {}({}), ([{}] {})".format(self.horse_id, self.horse_name, self.frame_number, self.horse_number,
+#                                                               self.horse_gender,
+#                                                               self.horse_age, self.weight, self.weight_diff,
+#                                                               self.trainer_stable, self.trainer_name)
 
 
-def load_each_result(tr):
+def load_each_result(race_id, tr):
     td_list = tr.find_all_next("td")
-    rank = td_list[0].text
+    order_arrival = td_list[0].text
     frame_number = td_list[1].text
     horse_number = td_list[2].text
     horse_name = td_list[3].text.strip()
@@ -96,12 +100,17 @@ def load_each_result(tr):
     else:
         time = None
     diff = td_list[8].text.strip()
+    try:
+        diff = int(diff)
+    except:
+        diff = 0
+
 
     ## 馬体重
     wm = weight_pattern.match(td_list[14].text.strip())
     if wm:
         horse_weight = int(wm.groups()[0])
-        horse_weight_diff = wm.groups()[1]
+        horse_weight_diff = int(wm.groups()[1])
     else:
         horse_weight = None
         horse_weight_diff = None
@@ -115,22 +124,36 @@ def load_each_result(tr):
         trainer_stable = None
         trainer_name = None
 
-    hr = HorseResult(horse_id, horse_name, frame_number, horse_number, horse_gender, horse_age, time, diff, horse_weight,
-                     horse_weight_diff, trainer_stable, trainer_name)
+    # hr = HorseResult(race_id, horse_id, horse_name, order_arrival, frame_number, horse_number, horse_gender, horse_age, time, diff, horse_weight,
+    #                  horse_weight_diff, trainer_stable, trainer_name)
+    hr = HorseResult()
+    hr.race_id = race_id
+    hr.horse_id = horse_id
+    hr.order_arrival = order_arrival
+    hr.frame_number = frame_number
+    hr.horse_number = horse_number
+    hr.time = time
+    hr.diff = diff
+    hr.weight = horse_weight
+    hr.weight_diff = horse_weight_diff
+    session.merge(hr)
+    session.commit()
 
-    return rank, frame_number, horse_number, horse_name, jockey_name, hr
+    return order_arrival, frame_number, horse_number, horse_name, jockey_name, hr
+
+def get_url(race_id):
+    return f"https://db.netkeiba.com/race/{race_id}/"
 
 def parse_page(race_id):
-    url = f"https://db.netkeiba.com/race/{race_id}/"
-    return parse_page_url(url)
-
-def parse_page_url(url):
+    url = get_url(race_id)
     print("parse page: {}".format(url))
     response = request.urlopen(url)
     bs = BeautifulSoup(response, "html.parser")
     print(bs.select("span"))
 
-    result_link = bs.find("li", class_="result_link").text
+    # result_link = bs.find("title").text
+    # result_link = bs.find("li", class_="result_link").text
+    result_link = bs.find("p", class_="smalltxt").text
     print("title:{}".format(result_link))
     t_m = result_date_pattern.match(result_link)
     race_date = None
@@ -144,17 +167,19 @@ def parse_page_url(url):
     if race_type_str == "LIVE":
         race_type_str = bs.select("span")[7].text
 
-    race_type = load_race_type(race_type_str, race_date)
+    print("race_type_str = {}".format(race_type_str))
+    race_type = load_race_type(race_id, race_type_str, race_date)
     print(race_type)
 
-    for tr in bs.find_all("tr"):
+    race_result_table = bs.find("table", class_="race_table_01 nk_tb_common")
+    for tr in race_result_table.find_all("tr"):
         if "class" in tr.attrs:
             continue
-        each_result = load_each_result(tr)
+        each_result = load_each_result(race_id, tr)
 
         print(each_result)
         print(each_result[-1])
-        break # とりあえず一着のみ
+        #break # とりあえず一着のみ
         ## <td>区切りで着順の情報が入っている。
 
 

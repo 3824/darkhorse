@@ -1,4 +1,5 @@
-from dark_horse.model.setting import Base
+# from dark_horse.model.setting import Base
+from model.setting import Base
 from sqlalchemy import Column, Integer, String, Float, Date
 
 class RaceInfo(Base):

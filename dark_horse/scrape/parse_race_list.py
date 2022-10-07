@@ -30,4 +30,5 @@ def load_list(day_list):
     return result
 
 if __name__ == '__main__':
-    print(load_list(["20210306", "20210305","20210304","20210303","20210302"]))
+    # print(load_list(["20210306", "20210305","20210304","20210303","20210302"]))
+    print(load_list(["20210306"]))
