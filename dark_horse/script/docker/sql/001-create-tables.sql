@@ -1,6 +1,12 @@
 CREATE DATABASE IF NOT EXISTS dark_horse;
 USE dark_horse;
 
+create table IF not EXISTS `race_url`
+(
+    `summary_url`     VARCHAR(50) NOT NULL,
+    `race_url`      VARCHAR(50) NOT NULL
+) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
 create table IF not exists `race_info`
 (
  `race_id`                VARCHAR(20) NOT NULL,

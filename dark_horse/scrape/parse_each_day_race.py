@@ -17,6 +17,6 @@ def load_detail_page(summary_url):
     return result
 
 if __name__ == '__main__':
-    url = "https://db.netkeiba.com/race/sum/55/20210306/"
+    url = "https://db.netkeiba.com/race/sum/50/20190123/"
     res = load_detail_page(url)
     print(res)

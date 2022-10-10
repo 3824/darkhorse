@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from parse_race_list import load_list
+from scrape.parse_race_list import load_list
 import time
+import os
 
 def get_summary_list(start_date, end_date):
     result = []
@@ -10,9 +11,9 @@ def get_summary_list(start_date, end_date):
     return result
 
 if __name__ == '__main__':
-    start_date_str = "20200731"
-    end_date_str = "20200831"
-    out_path = "dark_horse/summary/{}_{}.txt".format(start_date_str, end_date_str)
+    start_date_str = "20190101"
+    end_date_str = "20190228"
+    out_path = os.path.join(os.getcwd(), "dark_horse/summary/{}_{}.txt".format(start_date_str, end_date_str))
     
     with open(out_path, "w") as f:
         pass

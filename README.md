@@ -19,10 +19,9 @@ out: ['https://db.netkeiba.com/race/202155030611/', ...]
 in: 202035060701
 out: MySQLにRaceInfo書き込む
 5. dark_horse\scrape\parse_horse.py
+「血統」欄からデータ取得（2世帯前までくらいで）
 in: https://db.netkeiba.com/horse/2018106461/
 out: MySQLにHorse書き込む
-6. TODO ~~馬ページから血統ページに飛んで血統情報を紐づける~~
-　　馬ページの「血統」欄からデータ取得（2世帯前までくらいで）
-7. 
+ 
 
 
